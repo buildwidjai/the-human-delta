@@ -1,0 +1,2 @@
+ALTER TABLE public.temr_audit_logs ADD COLUMN IF NOT EXISTS public_report_id text;
+CREATE UNIQUE INDEX IF NOT EXISTS temr_audit_logs_public_report_id_key ON public.temr_audit_logs (public_report_id) WHERE public_report_id IS NOT NULL;
