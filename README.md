@@ -65,18 +65,3 @@ Render a report JSON to PDF locally:
 bun scripts/render-report.ts input.json output.pdf
 ```
 
-## Environment
-
-`.env` is managed automatically by Lovable Cloud and provides:
-
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_PUBLISHABLE_KEY`
-- `VITE_SUPABASE_PROJECT_ID`
-
-Server-side secrets (Stripe, SMTP, AI Gateway) live in Lovable Cloud and are
-injected into edge functions at runtime.
-
-## Deployment
-
-Published via Lovable at <https://thehumandelta.lovable.app>. Edge functions
-deploy automatically on save.
