@@ -26,4 +26,8 @@ dist
 build
 .env
 .env.development
+<<<<<<< HEAD
 .lovable/*
+=======
+
+>>>>>>> origin/main
