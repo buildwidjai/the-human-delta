@@ -1,0 +1,136 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 7%;
+
+    --card: 0 0% 98%;
+    --card-foreground: 0 0% 7%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 7%;
+
+    --primary: 0 0% 7%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 10% 94%;
+    --secondary-foreground: 0 0% 7%;
+
+    --muted: 210 10% 94%;
+    --muted-foreground: 215 8% 46%;
+
+    --accent: 42 78% 55%;
+    --accent-foreground: 0 0% 7%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 10% 88%;
+    --input: 210 10% 88%;
+    --ring: 0 0% 7%;
+
+    --radius: 0.5rem;
+
+    --gold: 42 78% 55%;
+    --gold-light: 42 80% 72%;
+    --gold-dark: 42 75% 42%;
+    --slate: 215 16% 47%;
+    --slate-light: 210 10% 94%;
+    --slate-dark: 215 20% 25%;
+
+    --gradient-gold: linear-gradient(135deg, hsl(42 78% 55%), hsl(42 80% 72%));
+    --shadow-gold: 0 4px 30px -8px hsl(42 78% 55% / 0.3);
+    --shadow-elevated: 0 20px 60px -15px hsl(0 0% 0% / 0.08);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+
+  button, input, select, textarea {
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+  }
+}
+
+@layer utilities {
+  .font-sans {
+    font-family: 'Inter', sans-serif;
+  }
+  .text-gradient-gold {
+    background: var(--gradient-gold);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .bg-gradient-gold {
+    background: var(--gradient-gold);
+  }
+  .shadow-gold {
+    box-shadow: var(--shadow-gold);
+  }
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+}
+
+/* Smooth animations */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.7s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out forwards;
+}
+
+/* Progress bar */
+.progress-bar {
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Executive CTA — gold glow on hover */
+.executive-cta:hover {
+  box-shadow: 0 0 0 1px #C9A24B, 0 0 28px rgba(201, 162, 75, 0.45);
+  transform: translateY(-1px);
+}
