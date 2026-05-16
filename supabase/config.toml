@@ -1,0 +1,31 @@
+project_id = "pqyjjxqlbrzmcyvqzsfh"
+
+[functions.human-delta-v12]
+verify_jwt = false
+
+[functions.create-checkout]
+verify_jwt = false
+
+[functions.get-stripe-price]
+verify_jwt = false
+
+[functions.payments-webhook]
+verify_jwt = false
+
+[functions.mint-report-token]
+verify_jwt = false
+
+[functions.generate-leadership-report]
+verify_jwt = false
+
+[functions.get-report]
+verify_jwt = false
+
+[functions.delete-my-data]
+verify_jwt = false
+
+[functions.purge-old-audit-logs]
+verify_jwt = false
+
+[functions.get-payment-link]
+verify_jwt = false
