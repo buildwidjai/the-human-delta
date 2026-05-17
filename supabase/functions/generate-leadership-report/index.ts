@@ -17,6 +17,7 @@ import {
 } from "../_shared/archetype.ts";
 import { V12_4_SYSTEM_PROMPT } from "../_shared/v12-4-system-prompt.ts";
 import { maskPii } from "../_shared/pii-mask.ts";
+import { createStripeClient, type StripeEnv } from "../_shared/stripe.ts";
 
 declare const Deno: { env: { get(name: string): string | undefined }; serve: (h: (req: Request) => Response | Promise<Response>) => void };
 
@@ -25,6 +26,70 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+
+// ── LLM cost pricing (USD per 1M tokens) ────────────────────────────
+// Lovable AI Gateway list prices. Keep in sync with knowledge/pricing.
+const LLM_PRICING: Record<string, { in: number; out: number }> = {
+  "gemini-2.5-pro":        { in: 1.25, out: 10.00 },
+  "gemini-2.5-flash":      { in: 0.30, out: 2.50 },
+  "gemini-2.5-flash-lite": { in: 0.10, out: 0.40 },
+  "gpt-5":                 { in: 1.25, out: 10.00 },
+  "gpt-5-mini":            { in: 0.25, out: 2.00 },
+  "gpt-5-nano":            { in: 0.05, out: 0.40 },
+};
+
+function computeLlmCostUsd(
+  model: string | null | undefined,
+  inTokens: number | null | undefined,
+  outTokens: number | null | undefined,
+): number | null {
+  if (!model) return null;
+  // Strip provider prefix ("google/", "openai/") if present.
+  const key = model.toLowerCase().replace(/^[a-z]+\//, "");
+  const rates = LLM_PRICING[key];
+  if (!rates) return null;
+  const ti = Math.max(0, Number(inTokens ?? 0));
+  const to = Math.max(0, Number(outTokens ?? 0));
+  const cost = (ti * rates.in + to * rates.out) / 1_000_000;
+  // Round to 6 decimals (matches numeric(10,6) column precision).
+  return Math.round(cost * 1_000_000) / 1_000_000;
+}
+
+// Zero-decimal currencies — amount_total is already in major units.
+const ZERO_DECIMAL = new Set([
+  "bif","clp","djf","gnf","jpy","kmf","krw","mga",
+  "pyg","rwf","ugx","vnd","vuv","xaf","xof","xpf",
+]);
+
+/**
+ * Look up the actual amount paid by the customer on the Stripe Checkout
+ * Session (after promo codes / discounts), returned in MAJOR currency
+ * units. Stored as-is on `transaction_audit_logs.amount_paid_usd`.
+ * Returns null for non-Stripe transaction ids (dev bypass) or on lookup
+ * failure — the audit row is still written without the field.
+ */
+async function fetchAmountPaidMajor(
+  paymentTransactionId: string | null,
+): Promise<number | null> {
+  if (!paymentTransactionId || !/^cs_[A-Za-z0-9_]{10,200}$/.test(paymentTransactionId)) {
+    return null;
+  }
+  for (const env of ["sandbox", "live"] as const) {
+    try {
+      const stripe = createStripeClient(env as StripeEnv);
+      const s = await stripe.checkout.sessions.retrieve(paymentTransactionId);
+      if (!s || (s as any).object !== "checkout.session") continue;
+      const total = (s as any).amount_total;
+      const currency = String((s as any).currency ?? "").toLowerCase();
+      if (typeof total !== "number") return null;
+      if (ZERO_DECIMAL.has(currency)) return total;
+      return total / 100;
+    } catch {
+      // try other environment
+    }
+  }
+  return null;
+}
 
 // ─────────────────────────────────────────────────────────────────────
 // V12.4 ARCHETYPE LIBRARY
@@ -276,6 +341,7 @@ Deno.serve(async (req) => {
             .eq("payment_transaction_id", paymentTransactionId)
             .maybeSingle();
           if (!existingAudit) {
+            const cachedAmountPaid = await fetchAmountPaidMajor(paymentTransactionId);
             await sb.from("transaction_audit_logs").insert({
               report_id: priorSuccess!.report_id ?? null,
               session_id: effectiveSessionId,
@@ -300,6 +366,9 @@ Deno.serve(async (req) => {
                 position: body.position ?? null,
               },
               report_generated_at: new Date().toISOString(),
+              // Cached path: LLM was not re-invoked, so no new cost.
+              llm_cost_usd: 0,
+              amount_paid_usd: cachedAmountPaid,
             });
           }
         } catch (auditErr) {
@@ -502,6 +571,10 @@ Deno.serve(async (req) => {
       user_payload: userPayload,
       generation_config: { temperature: 0.1, topP: 0.1, responseMimeType: "application/json", maxOutputTokens: 24576 },
     };
+    // Best-effort cost + amount lookups. Either failing must NOT block
+    // the audit insert — these are reporting fields, not gating logic.
+    const llmCostUsd = computeLlmCostUsd(model, llmInputTokens, llmOutputTokens);
+    const amountPaidUsd = await fetchAmountPaidMajor(paymentTransactionId);
     await sb.from("transaction_audit_logs").insert({
       report_id: publicReportId,
       session_id: effectiveSessionId,
@@ -553,6 +626,8 @@ Deno.serve(async (req) => {
       llm_generation_status: parseError ? "failed" : "success",
       final_transaction_status: parseError ? "failed" : "success",
       total_duration_ms: latencyMs,
+      llm_cost_usd: llmCostUsd,
+      amount_paid_usd: amountPaidUsd,
       // QA test runs go through the dev-bypass header AND carry no real
       // payment token (see dev-test-flow). The worker also forwards the
       // dev-bypass header on retries of REAL paid jobs, so we additionally
