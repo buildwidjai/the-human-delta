@@ -34,6 +34,7 @@ import {
   getForensicTeaser,
 } from "@/lib/archetype-preview";
 import { ExecutivePreviewCard } from "@/components/ExecutivePreviewCard";
+import { trackEvent } from "@/lib/analytics";
 
 const TOTAL_QUESTIONS = gameSections.reduce(
   (sum, g) => sum + g.foundational.length + g.probes.length,
@@ -289,6 +290,7 @@ const Questionnaire = () => {
 
   const handleSubmit = () => {
     setShowResults(true);
+    trackEvent("complete_questionnaire", { total_questions: TOTAL_QUESTIONS });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -371,7 +373,10 @@ const Questionnaire = () => {
 
             <div className="flex flex-wrap items-center gap-3">
               <button
-                onClick={() => setStep(0)}
+                onClick={() => {
+                  trackEvent("begin_questionnaire");
+                  setStep(0);
+                }}
                 className="inline-flex items-center gap-2 bg-foreground text-primary-foreground font-semibold px-8 py-4 rounded-lg text-sm hover:opacity-90 transition-all duration-300"
               >
                 Begin Audit
@@ -592,7 +597,7 @@ const Questionnaire = () => {
                 <span>
                   I understand my report is produced by an{" "}
                   <strong className="font-semibold">automated profiling pipeline</strong>{" "}
-                  (deterministic scoring + a Google Gemini language model),
+                  (deterministic scoring + AI),
                   that this is a development tool and not a hiring, legal,
                   medical or financial decision, and that I may request a
                   human review at any time. (<em>GDPR Art. 22</em>)
