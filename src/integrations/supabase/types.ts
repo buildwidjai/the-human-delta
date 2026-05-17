@@ -249,6 +249,7 @@ export type Database = {
       }
       transaction_audit_logs: {
         Row: {
+          amount_paid_usd: number | null
           archetype_scores: Json | null
           audit_id: string
           created_at: string
@@ -260,6 +261,7 @@ export type Database = {
           final_transaction_status: string | null
           hashed_email: string | null
           is_reattempt: boolean
+          llm_cost_usd: number | null
           llm_duration_ms: number | null
           llm_error_details: string | null
           llm_generation_status: string | null
@@ -287,6 +289,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          amount_paid_usd?: number | null
           archetype_scores?: Json | null
           audit_id?: string
           created_at?: string
@@ -298,6 +301,7 @@ export type Database = {
           final_transaction_status?: string | null
           hashed_email?: string | null
           is_reattempt?: boolean
+          llm_cost_usd?: number | null
           llm_duration_ms?: number | null
           llm_error_details?: string | null
           llm_generation_status?: string | null
@@ -325,6 +329,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          amount_paid_usd?: number | null
           archetype_scores?: Json | null
           audit_id?: string
           created_at?: string
@@ -336,6 +341,7 @@ export type Database = {
           final_transaction_status?: string | null
           hashed_email?: string | null
           is_reattempt?: boolean
+          llm_cost_usd?: number | null
           llm_duration_ms?: number | null
           llm_error_details?: string | null
           llm_generation_status?: string | null
